@@ -1,6 +1,5 @@
 /**
- * a phong shader implementation
- * Created by Samuel Gratzl on 29.02.2016.
+ * a simple shader
  */
 
  // position of vertex

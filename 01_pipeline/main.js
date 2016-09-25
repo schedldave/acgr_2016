@@ -1,6 +1,5 @@
 /**
- *
- * Created by Marc Streit on 01.04.2016.
+ * Project for first lab session
  */
 
 //the OpenGL context

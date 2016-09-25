@@ -1,5 +1,4 @@
 /**
- * Created by Samuel Gratzl on 08.02.2016.
  */
 
 var gl = null;
