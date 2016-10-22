@@ -47,7 +47,7 @@ function makeCube( s ) {
   var normal = [];
   var texture = [];
   var color = new Float32Array([
-     0,1,1, 0,1,1, 0,1,1, 0,1,1,
+     0,1,1, 0,0,1, 0,1,1, 0,1,1,
      1,0,1, 1,0,1, 1,0,1, 1,0,1,
      1,0,0, 1,0,0, 1,0,0, 1,0,0,
      0,0,1, 0,0,1, 0,0,1, 0,0,1,
@@ -145,7 +145,7 @@ function init(resources) {
 
   // create cube in origin
   rootNode.append(
-    new TransformationSGNode( glm.transform({ translate: [0,.1,0], rotateX: 0, scale: 1}), [
+    new TransformationSGNode( glm.transform({ translate: [0,.5,0], rotateX: 0, scale: 1}), [
       new RenderSGNode(makeCube(0.1))
     ]));
 

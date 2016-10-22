@@ -709,12 +709,12 @@ class SetUniformSGNode extends SGNode {
 
 }
 
-class AdvancedTextureSGNode extends SGNode {
-  constructor(image, children ) {
+class TextureSGNode extends SGNode {
+  constructor(image, textureunit, uniform, children ) {
       super(children);
       this.image = image;
-      this.textureunit = 0;
-      this.uniform = 'u_tex';
+      this.textureunit = textureunit || 0;
+      this.uniform = uniform || 'u_tex';
       this.textureId = -1;
   }
 
@@ -738,11 +738,19 @@ class AdvancedTextureSGNode extends SGNode {
       this.init(context.gl);
     }
     //set additional shader parameters
-    gl.uniform1i(gl.getUniformLocation(context.shader, this.uniform), this.textureunit);
+    var textureLoc = gl.getUniformLocation(context.shader, this.uniform);
+    if (isValidUniformLocation(textureLoc) ){
+      gl.uniform1i(textureLoc, this.textureunit);
 
-    //activate and bind texture
-    gl.activeTexture(gl.TEXTURE0 + this.textureunit);
-    gl.bindTexture(gl.TEXTURE_2D, this.textureId);
+      var textureEnableLoc = gl.getUniformLocation(context.shader, this.uniform+'Enabled');
+      if (isValidUniformLocation(textureEnableLoc) ){
+          gl.uniform1i(textureEnableLoc, 1);
+      }
+
+      //activate and bind texture
+      gl.activeTexture(gl.TEXTURE0 + this.textureunit);
+      gl.bindTexture(gl.TEXTURE_2D, this.textureId);
+    }
 
     //render children
     super.render(context);
@@ -750,6 +758,9 @@ class AdvancedTextureSGNode extends SGNode {
     //clean up
     gl.activeTexture(gl.TEXTURE0 + this.textureunit);
     gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // disable texturing
+    gl.uniform1i(gl.getUniformLocation(context.shader, this.uniform+'Enabled'), 0);
   }
 }
 
@@ -779,6 +790,16 @@ class RenderSGNode extends SGNode {
     gl.uniformMatrix4fv(gl.getUniformLocation(shader, 'u_modelView'), false, modelViewMatrix);
     gl.uniformMatrix3fv(gl.getUniformLocation(shader, 'u_normalMatrix'), false, normalMatrix);
     gl.uniformMatrix4fv(gl.getUniformLocation(shader, 'u_projection'), false, projectionMatrix);
+    // seperate model and seperate view matrices
+    gl.uniformMatrix4fv(gl.getUniformLocation(shader, 'u_model'), false, context.sceneMatrix);
+    gl.uniformMatrix4fv(gl.getUniformLocation(shader, 'u_view'), false, context.viewMatrix);
+    gl.uniformMatrix4fv(gl.getUniformLocation(shader, 'u_invView'), false, mat4.invert(mat4.create(),context.viewMatrix));
+    const normalMMatrix = mat3.normalFromMat4(mat3.create(), context.sceneMatrix);
+    gl.uniformMatrix3fv(gl.getUniformLocation(shader, 'u_modelNormalMatrix'), false, normalMMatrix);
+    const normalMVMatrix = mat3.normalFromMat4(mat3.create(), modelViewMatrix);
+    gl.uniformMatrix3fv(gl.getUniformLocation(shader, 'u_modelViewNormalMatrix'), false, normalMVMatrix);
+
+
   }
 
   render(context) {
@@ -800,6 +821,7 @@ function modelRenderer(model) {
   var position = null;
   var texCoordBuffer = null;
   var normalBuffer = null;
+  var tangentBuffer = null;
   var colorBuffer = null;
   var indexBuffer = null;
   //first time init of buffers
@@ -816,6 +838,23 @@ function modelRenderer(model) {
       normalBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.normal), gl.STATIC_DRAW);
+    }
+
+    if (model.normal && model.texture) {
+      // if normals exist, also calculate tangent (and bitangent in Shader):
+      var index = model.index;
+      if (!index) {
+        index = [];
+
+        for (var i = 1; i < (model.position.length/3); i++) {
+           index.push(i);
+        }
+
+      }
+      model.tangent = calculateTangents(index, model.position, model.texture, model.normal);
+      tangentBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, tangentBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.tangent), gl.STATIC_DRAW);
     }
     if (model.index) {
       indexBuffer = gl.createBuffer();
@@ -856,6 +895,12 @@ function modelRenderer(model) {
       gl.enableVertexAttribArray(normalLoc);
       gl.vertexAttribPointer(normalLoc, 3, gl.FLOAT, false, 0, 0);
     }
+    var tangentLoc = gl.getAttribLocation(shader, 'a_tangent');
+    if (isValidAttributeLocation(tangentLoc) && model.tangent ) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, tangentBuffer);
+      gl.enableVertexAttribArray(tangentLoc);
+      gl.vertexAttribPointer(tangentLoc, 3, gl.FLOAT, false, 0, 0);
+    }
     var colorLoc = gl.getAttribLocation(shader, 'a_color');
     if (isValidAttributeLocation(colorLoc) && model.color) {
       gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -872,6 +917,68 @@ function modelRenderer(model) {
     }
   };
 }
+
+/*
+    Calculate tangents that are used alongside normals (preset) and binormals (calculated in the shader as normal cross tangent)
+    to generate the (t)angent-(b)inormal-(n)ormal matrix (TBN-Matrix) used to convert tangent space coordinates (from the normal map)
+    into object coordinates
+
+    modified from: 2015 Sascha Willems (www.saschawillems.de)
+   */
+  function calculateTangents(index, vertices, texcoords, normals) {
+    var tangents = [];
+
+    for (var t = 0; t < index.length ; t+=3) {
+
+      var i0 = index[t];
+      var i1 = index[t+1];
+      var i2 = index[t+2];
+
+      var v0 = vec3.fromValues(vertices[i0*3], vertices[i0*3+1], vertices[i0*3+2]);
+      var v1 = vec3.fromValues(vertices[i1*3], vertices[i1*3+1], vertices[i1*3+2]);
+      var v2 = vec3.fromValues(vertices[i2*3], vertices[i2*3+1], vertices[i2*3+2]);
+
+      var e0 = vec3.fromValues(0, texcoords[i1*2] - texcoords[i0*2], texcoords[i1*2+1] - texcoords[i0*2+1]);
+      var e1 = vec3.fromValues(0, texcoords[i2*2] - texcoords[i0*2], texcoords[i2*2+1] - texcoords[i0*2+1]);
+
+      var epsilon = 1e-6;
+
+      var tmpT = vec3.create();
+      var tmpB = vec3.create();
+
+      for (var k = 0; k < 3; k++) {
+        e0[0] = v1[k] - v0[k];
+        e1[0] = v2[k] - v0[k];
+        var tmpVec = vec3.create();
+        vec3.cross(tmpVec, e0, e1);
+        // Use small epsilon to cope with numerical instability
+        if (Math.abs(tmpVec[0]) > epsilon) {
+          tmpT[k] = -tmpVec[1] / tmpVec[0];
+          tmpB[k] = -tmpVec[2] / tmpVec[0];
+        } else {
+          tmpT[k] = 0;
+          tmpB[k] = 0;
+        }
+      }
+
+      vec3.normalize(tmpT, tmpT);
+      vec3.normalize(tmpB, tmpB);
+      var normal = vec3.create();
+      vec3.cross(normal, tmpT, tmpB);
+      vec3.normalize(normal, normal);
+
+      // We use per-vertex tangents here, for a complex model you'd average the
+      // tangents amongst shared vertices
+      for (var v = 0; v < 3; v++) {
+        var tangent = vec3.create();
+        vec3.cross(tangent, tmpB, normal);
+        tangents.push(tangent[0], tangent[1], tangent[2]);
+      }
+
+    }
+
+    return tangents;
+  }
 
 /**
  * a material node represents one material including (ambient, diffuse, specular, emission, and shininess)
