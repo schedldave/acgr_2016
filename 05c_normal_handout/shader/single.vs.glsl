@@ -1,5 +1,5 @@
 /**
- * Created by Samuel Gratzl on 29.02.2016.
+ *  Simple vertex shader 
  */
 attribute vec3 a_position;
 

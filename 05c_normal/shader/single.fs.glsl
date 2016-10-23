@@ -1,5 +1,5 @@
 /**
- * Created by Samuel Gratzl on 29.02.2016.
+ * Simple shader with single color output
  */
 precision mediump float;
 
