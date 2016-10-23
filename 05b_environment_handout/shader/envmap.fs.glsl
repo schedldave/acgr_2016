@@ -13,7 +13,7 @@ varying vec3 v_cameraRayVec;
 uniform bool u_useReflection;
 uniform bool u_useRefraction;
 uniform bool u_useFresnel;
-uniform float u_refractionEta;
+uniform float u_refractionEta; // n1/n2
 uniform float u_fresnelR0;
 
 uniform samplerCube u_texCube;
