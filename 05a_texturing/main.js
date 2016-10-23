@@ -1,5 +1,5 @@
 /**
- * Created by Clemens Birklbauer on 22.02.2016.
+ *
  */
 'use strict';
 
