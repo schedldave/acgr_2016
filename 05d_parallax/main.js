@@ -60,6 +60,7 @@ function createSceneGraph(gl, resources) {
   //create scenegraph
   const root = new ShaderSGNode(createProgram(gl, resources.vs, resources.fs));
 
+
   //light debug helper function
   function createLightSphere() {
     return new ShaderSGNode(createProgram(gl, resources.vs_single, resources.fs_single), [
@@ -69,7 +70,7 @@ function createSceneGraph(gl, resources) {
 
   {
     //initialize light
-    let light = new LightSGNode(); //use now framework implementation of light node
+    var light = new LightSGNode(); //use now framework implementation of light node
     light.ambient = [0.2, 0.2, 0.2, 1];
     light.diffuse = [0.8, 0.8, 0.8, 1];
     light.specular = [1, 1, 1, 1];
@@ -99,10 +100,16 @@ function createSceneGraph(gl, resources) {
     ofloor.diffuse = [0.1, 0.1, 0.1, 1];
     ofloor.specular = [0.5, 0.5, 0.5, 1];
     ofloor.shininess = 50.0;
+    ofloor.lights = [light]; // tell material which lights to use!
 
-    root.append(new TransformationSGNode(glm.transform({ translate: [-1,1,-1], rotateX: -90, scale: 1}), [
-      ofloor
-    ]));
+    // advanced parallax occlusion shader:
+    var advancedShader = new ShaderSGNode(createProgram(gl, resources.vs, resources.fs_occlusion),[
+        new TransformationSGNode(glm.transform({ translate: [ -1,1, -1], rotateX: -90, scale: 1}), [ ofloor ])
+      ]);
+
+
+    root.append( advancedShader );
+
   }
   {
     //initialize floor with simple parallax mapping
