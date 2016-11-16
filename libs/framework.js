@@ -798,6 +798,12 @@ class RenderSGNode extends SGNode {
     gl.uniformMatrix3fv(gl.getUniformLocation(shader, 'u_modelNormalMatrix'), false, normalMMatrix);
     const normalMVMatrix = mat3.normalFromMat4(mat3.create(), modelViewMatrix);
     gl.uniformMatrix3fv(gl.getUniformLocation(shader, 'u_modelViewNormalMatrix'), false, normalMVMatrix);
+    const normalInvViewMatrix = mat3.invert(mat3.create(), mat3.normalFromMat4(mat3.create(),context.viewMatrix));
+    gl.uniformMatrix3fv(gl.getUniformLocation(shader, 'u_invViewNormalMatrix'), false, normalInvViewMatrix);
+
+    const invViewProjMatrix = mat4.invert(mat4.create(),
+          mat4.multiply(mat4.create(), context.projectionMatrix, context.viewMatrix));
+    gl.uniformMatrix4fv(gl.getUniformLocation(shader, 'u_invViewProjMatrix'), false, invViewProjMatrix);
 
 
   }
