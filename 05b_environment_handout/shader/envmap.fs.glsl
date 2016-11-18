@@ -24,5 +24,8 @@ void main() {
 	vec3 cameraRayVec = normalize(v_cameraRayVec);
 
   vec3 texCoords = cameraRayVec;
+  if( u_useReflection ){
+    texCoords = reflect( cameraRayVec, normalVec );
+  }
   gl_FragColor = textureCube(u_texCube, texCoords);
 }

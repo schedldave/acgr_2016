@@ -64,7 +64,7 @@ function createSceneGraph(gl, resources) {
   {
     //initialize
     let sphere = new TransformationSGNode(glm.transform({ translate: [0,0, 0], rotateX : 0, rotateZ : 0, scale: 1.0 }),
-                   new EnvironmentSGNode(envcubetexture,4,true,true,true,
+                   new EnvironmentSGNode(envcubetexture,0,true,false,false,
                    new RenderSGNode(makeSphere(1))));
                    //new RenderSGNode(resources.model)));
 

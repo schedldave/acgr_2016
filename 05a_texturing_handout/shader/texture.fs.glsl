@@ -30,6 +30,10 @@ varying vec3 v_normalVec;
 varying vec3 v_eyeVec;
 varying vec3 v_lightVec;
 
+varying vec2 v_texCoord;
+
+uniform sampler2D u_diffuseTex;
+//uniform bool u_diffuseTexEnabled;
 
 
 vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, vec3 normalVec, vec3 eyeVec) {
@@ -54,6 +58,9 @@ vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, ve
 
 void main (void) {
 
+
+
 	gl_FragColor = calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec );
 
+	gl_FragColor = texture2D( u_diffuseTex, v_texCoord );
 }

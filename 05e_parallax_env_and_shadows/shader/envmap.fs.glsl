@@ -23,7 +23,7 @@ float fresnel(vec3 direction, vec3 normal) {
 
     float cosine = dot( nNormal, nDirection );
     float product = max( cosine, 0.0 );
-    float factor = pow( 1.0-product, 2.0 );
+    float factor = pow( 1.0-product, 5.0 );
 
     factor = u_fresnelR0 + (1.0-u_fresnelR0)*factor;
 

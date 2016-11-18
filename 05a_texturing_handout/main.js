@@ -108,8 +108,9 @@ function createSceneGraph(gl, resources) {
     //initialize floor
 
     let floor = new MaterialSGNode(
+      new TextureSGNode(resources.texture_diffuse, 0, 'u_diffuseTex',
                       new RenderSGNode(makeFloor())
-                );
+                ));
 
     //dark
     floor.ambient = [0, 0, 0, 1];
