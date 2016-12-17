@@ -95,10 +95,11 @@ function loadResources(resources, callback) {
  * @param height
  * @returns {WebGLRenderingContext}
  */
-function createContext(width, height) {
+function createContext(width, height, isFixed) {
   var canvas = document.createElement('canvas');
   canvas.width = width || 400;
   canvas.height = height || 400;
+  canvas.sizeFixed = isFixed || false;
   document.body.appendChild(canvas);
   return canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 }
@@ -156,8 +157,9 @@ function createProgram(gl, vertex, fragment) {
 function checkForWindowResize(gl) {
   var width = gl.canvas.clientWidth;
   var height = gl.canvas.clientHeight;
-  if (gl.canvas.width != width ||
-    gl.canvas.height != height) {
+  if ( !gl.canvas.sizeFixed &&
+      ( gl.canvas.width != width ||
+        gl.canvas.height != height)) {
     gl.canvas.width = width;
     gl.canvas.height = height;
   }
@@ -725,8 +727,8 @@ class TextureSGNode extends SGNode {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter || gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.minFilter || gl.LINEAR);
 
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS || gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.wrapT || gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS || gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.wrapT || gl.CLAMP_TO_EDGE);
 
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
 
