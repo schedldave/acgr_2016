@@ -49,9 +49,7 @@ function init(resources) {
 
   // disable depth test for our use case
   gl.disable(gl.DEPTH_TEST);
-
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
+  gl.disable(gl.BLEND);
 
   //create scenegraph
   root = createSceneGraph(gl, resources);
@@ -152,8 +150,6 @@ class LFSGNode extends SGNode {
     super( children );
     this.lfsize = [lfsize.s,lfsize.t,lfsize.u,lfsize.v];
     this.texsize = texsize;
-    this.currentview = [3, 3];
-    this.currentweight = 1.0;
     this.center = [(lfsize.u-1)/2.0, (lfsize.v-1)/2.0];
     this.disparity = 0.0;
 
@@ -201,7 +197,6 @@ function render(timeInMilliseconds) {
 
 
   // render lf-quad
-  quad.currentweight = 1.0/(lfSize.u*lfSize.v);
   quad.disparity = lf_disparity;
   quad.aperture = aperture;
   root.render(context);
